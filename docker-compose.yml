@@ -1,0 +1,39 @@
+version: "1"
+services:
+  mysql:
+    build:
+      context: .
+      dockerfile: docker/db/Dockerfile
+    command: --init-file /sql/init.sql
+    expose:
+      - "3306"
+    ports:
+      - "3306:3306"
+#    healthcheck:
+#      test: [ "CMD", "mysqladmin" ,"ping", "-h", "localhost" ]
+#      timeout: 1s
+#      retries: 3
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin-mysql
+    links:
+      - mysql
+    restart: always
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - 8080:80
+  api:
+    build:
+      context: .
+      dockerfile: docker/app/Dockerfile
+    container_name: FastAPI-RestAPI
+    volumes:
+      - .:/code
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_started
